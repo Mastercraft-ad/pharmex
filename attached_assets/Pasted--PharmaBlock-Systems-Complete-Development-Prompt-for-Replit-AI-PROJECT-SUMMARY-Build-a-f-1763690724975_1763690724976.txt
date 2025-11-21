@@ -1,0 +1,758 @@
+# PharmaBlock Systems - Complete Development Prompt for Replit AI
+
+## PROJECT SUMMARY
+
+Build a full-stack blockchain-based pharmaceutical supply chain authentication system called "PharmaBlock Systems". This is a web application that tracks medicines from manufacturer to consumer using blockchain technology to prevent counterfeit drugs and ensure transparency.
+
+---
+
+## TECH STACK REQUIREMENTS
+
+**Frontend:**
+- React 18+ with TypeScript
+- Vite as build tool
+- Tailwind CSS for styling
+- React Router for navigation
+- Axios for API calls
+- QR code scanning and generation libraries
+
+**Backend:**
+- Node.js with Express
+- SQLite database (better-sqlite3)
+- JWT authentication
+- Hardhat for local blockchain development
+- Ethers.js for blockchain interaction
+
+**Blockchain:**
+- Solidity smart contracts
+- Local Hardhat network
+- Three main contracts: SerializationRegistry, TransferManager, RecallManager
+
+---
+
+## CORE FUNCTIONALITY REQUIREMENTS
+
+### 1. USER AUTHENTICATION SYSTEM
+
+Create a complete authentication system with:
+- User registration with role selection (Manufacturer, Distributor, Pharmacy)
+- Login with email and password
+- JWT token-based authentication
+- Password hashing with bcrypt
+- Protected routes based on user roles
+- Automatic wallet address generation for each user
+- Profile management
+
+Store user data including:
+- Email, password hash, role
+- Company name, license number
+- Country (default Nigeria)
+- Wallet address (simulated Ethereum-style)
+- Account verification status
+- Login timestamps
+
+### 2. MANUFACTURER FEATURES
+
+**Drug Batch Registration:**
+- Form to input drug details (name, batch number, quantity, dates, location)
+- Generate unique serial IDs in format: DRUG-{YEAR}-{UUID}
+- Create metadata JSON files containing all drug information
+- Register batch on blockchain via smart contract
+- Generate QR codes containing serial ID and verification URL
+- Store all data in database with blockchain transaction hash
+- Display success confirmation with QR code download option
+
+**Batch Management Dashboard:**
+- Statistics cards showing total batches, active, transferred, expired, recalled
+- Table listing all registered batches with filters by status
+- Search functionality by serial ID, drug name, or batch number
+- Pagination for large datasets
+- Action buttons for each batch (View Details, Transfer, Download QR)
+- Batch detail modal showing complete information and transfer history
+
+**Transfer Initiation:**
+- Form to transfer batches to distributors
+- Email-based recipient selection
+- Quantity specification
+- Location and notes fields
+- Blockchain transaction recording
+- Update ownership in database
+- Email notification to recipient
+
+### 3. DISTRIBUTOR FEATURES
+
+**Incoming Shipments Management:**
+- Dashboard showing pending incoming transfers
+- Accept or reject shipment options
+- View sender details and batch information
+- Confirm receipt with timestamp
+- Update batch ownership upon acceptance
+
+**Outbound Transfer to Pharmacies:**
+- Similar transfer functionality as manufacturers
+- Transfer batches to registered pharmacies
+- Record all transfers on blockchain
+- Track transfer status (pending, accepted, rejected)
+
+**Inventory Tracking:**
+- List of currently owned batches
+- Status indicators for each batch
+- Complete supply chain visibility
+- Transfer history timeline
+
+### 4. PHARMACY FEATURES
+
+**Drug Verification Terminal:**
+- Primary verification interface with large search/scan button
+- Manual serial ID entry option
+- QR code camera scanning capability
+- Real-time blockchain verification
+- Display verification results with color coding:
+  - Green for verified authentic
+  - Red for counterfeit/not found
+  - Yellow for warnings (expiring, recalled)
+
+**Verification Results Display:**
+- Large status icon and message
+- Drug information (name, batch number, manufacturer)
+- Production and expiry dates
+- Complete transfer history with timeline visualization
+- Recall status check
+- Blockchain transaction details
+- "Report Suspicious Product" button
+
+**Incoming Shipments:**
+- View transfers from distributors
+- Accept deliveries with confirmation
+- Automatic inventory update
+- Integration with verification system
+
+**Statistics Dashboard:**
+- Total verifications performed
+- Authentic vs suspicious count
+- Daily/weekly verification trends
+- Current inventory count
+
+### 5. CONSUMER VERIFICATION (PUBLIC ACCESS)
+
+**Public Verification Page:**
+- No login required
+- Clean, simple interface
+- Large "Scan to Verify" button
+- QR code scanner using device camera
+- Manual serial ID entry option
+- Instant verification results
+
+**Verification Display:**
+- Simple authentic/counterfeit indicator
+- Basic drug information
+- Manufacturer name
+- Production and expiry dates
+- "Report Issue" button for suspicious products
+- Educational content about counterfeit drugs
+- Link to view blockchain transaction
+
+**Anonymous Reporting:**
+- Report form for suspicious products
+- No personal information required
+- Reason selection and description field
+- Location input (optional)
+- Confirmation message after submission
+
+---
+
+## DATABASE SCHEMA REQUIREMENTS
+
+### Users Table
+Store user accounts with email, password hash, role, company name, license number, country, wallet address, verification status, and timestamps.
+
+### Drug Batches Table
+Store all registered drugs with serial ID, drug name, batch number, quantity, manufacturer ID, production date, expiry date, manufacturing location, metadata hash, blockchain transaction hash, QR code file path, status (active/transferred/recalled/expired), current owner ID, and creation timestamp.
+
+### Transfers Table
+Track all transfers with serial ID, sender ID, recipient ID, sender role, recipient role, quantity, transfer type, blockchain transaction hash, location, notes, status (pending/accepted/rejected), and transfer dates.
+
+### Verification Logs Table
+Log every verification attempt with serial ID, verifier role, verifier user ID (if logged in), verification result (authentic/counterfeit/unknown), IP address, location, device info, and timestamp.
+
+### Recalls Table
+Store recall information with serial ID, reason, initiator user ID, blockchain transaction hash, active status, initiation timestamp, and resolution timestamp.
+
+---
+
+## BLOCKCHAIN SMART CONTRACT REQUIREMENTS
+
+### SerializationRegistry Contract
+
+**Purpose:** Register and verify drug batches on blockchain
+
+**Functions Needed:**
+- Register new batch with serial ID and metadata hash
+- Verify batch exists and get details
+- Deactivate batch if needed
+- Store manufacturer address and timestamp
+- Emit events for registration and deactivation
+
+**Data Storage:**
+- Batch serial ID
+- Metadata hash (simulating IPFS CID)
+- Manufacturer wallet address
+- Registration timestamp
+- Active status boolean
+
+### TransferManager Contract
+
+**Purpose:** Track ownership transfers throughout supply chain
+
+**Functions Needed:**
+- Record transfer from one party to another
+- Get complete transfer history for a batch
+- Get current owner of a batch
+- Support three transfer types: Manufacturer→Distributor, Distributor→Pharmacy, Pharmacy→Consumer
+- Emit events for each transfer
+
+**Data Storage:**
+- Transfer history array for each serial ID
+- Current owner mapping
+- From and to addresses
+- Transfer timestamp
+- Transfer type enumeration
+
+### RecallManager Contract
+
+**Purpose:** Manage drug recalls for safety
+
+**Functions Needed:**
+- Initiate recall with reason (regulator role only)
+- Check recall status for any batch
+- Resolve recall when issue fixed
+- Role-based access control for regulators
+- Emit events for recall initiation and resolution
+
+**Data Storage:**
+- Recall mapping by serial ID
+- Recall reason
+- Initiator address
+- Timestamp
+- Active status
+
+### Blockchain Service Layer
+
+Create a service that:
+- Initializes connection to local Hardhat network
+- Loads and interacts with deployed contracts
+- Provides wrapper functions for all contract calls
+- Handles transaction signing
+- Manages gas fees
+- Returns formatted data to backend
+- Handles blockchain errors gracefully
+
+---
+
+## API ENDPOINTS TO CREATE
+
+### Authentication Endpoints
+- POST /api/auth/register - Create new user account
+- POST /api/auth/login - Authenticate user and return JWT
+- GET /api/auth/me - Get current user profile
+- PUT /api/auth/profile - Update user profile
+- POST /api/auth/logout - Invalidate session
+
+### Manufacturer Endpoints
+- POST /api/batches/register - Register new drug batch
+- GET /api/batches - List all batches for manufacturer (with pagination)
+- GET /api/batches/:serialId - Get detailed batch information
+- PUT /api/batches/:serialId - Update batch details
+- POST /api/batches/:serialId/transfer - Initiate transfer to distributor
+- GET /api/batches/:serialId/history - Get transfer history
+- GET /api/batches/:serialId/qr - Download QR code image
+- GET /api/batches/statistics - Get dashboard statistics
+
+### Distributor Endpoints
+- GET /api/distributor/incoming - View incoming shipments
+- POST /api/distributor/accept/:transferId - Accept incoming transfer
+- POST /api/distributor/reject/:transferId - Reject incoming transfer
+- POST /api/distributor/transfer - Transfer batch to pharmacy
+- GET /api/distributor/inventory - Get current inventory
+- GET /api/distributor/statistics - Get dashboard statistics
+
+### Pharmacy Endpoints
+- POST /api/pharmacy/verify - Verify drug authenticity
+- GET /api/pharmacy/incoming - View incoming transfers
+- POST /api/pharmacy/accept/:transferId - Accept delivery
+- GET /api/pharmacy/inventory - Get inventory
+- POST /api/pharmacy/report - Report suspicious product
+- GET /api/pharmacy/statistics - Get verification statistics
+
+### Public/Consumer Endpoints
+- GET /api/verify/:serialId - Public verification (no auth)
+- POST /api/verify/scan - Verify via QR scan
+- POST /api/report - Anonymous suspicious product report
+- GET /api/verify/:serialId/details - Get public drug information
+
+### Analytics Endpoints
+- GET /api/analytics/dashboard - Get overall system statistics
+- GET /api/analytics/verifications - Get verification analytics
+- GET /api/analytics/transfers - Get transfer statistics
+- GET /api/analytics/recalls - Get recall information
+
+---
+
+## UI/UX DESIGN REQUIREMENTS
+
+### Color Scheme
+Use a professional medical/pharmaceutical color palette:
+- Primary: Blue (#2563eb) for main actions and headers
+- Secondary: Purple (#7c3aed) for secondary actions
+- Success: Green (#10b981) for verified/authentic indicators
+- Warning: Orange (#f59e0b) for warnings and expiring products
+- Danger: Red (#ef4444) for counterfeit/error states
+- Background: Light gray (#f9fafb)
+- Surface: White (#ffffff) for cards
+- Text: Dark gray (#111827) for primary text, lighter gray (#6b7280) for secondary
+
+### Typography
+- Font: Inter or system fonts
+- Headings: Bold, larger sizes
+- Body: Regular weight, readable size
+- Small text: Reduced size for metadata
+
+### Layout Structure
+Create a responsive dashboard layout with:
+- Fixed header with logo, user info, and logout
+- Collapsible sidebar navigation on desktop
+- Bottom tab navigation on mobile
+- Main content area with proper spacing
+- Statistics cards at top of dashboards
+- Data tables with pagination below cards
+- Modal overlays for forms and details
+
+### Component Requirements
+
+**Statistics Cards:**
+- Display key metrics with large numbers
+- Include icons representing the metric
+- Show trend indicators (up/down arrows)
+- Color-coded based on status
+- Responsive grid layout
+
+**Data Tables:**
+- Clean, striped rows
+- Sortable columns
+- Search and filter functionality
+- Pagination controls
+- Action buttons per row (View, Edit, Delete, Transfer)
+- Responsive design (stack on mobile)
+- Loading states and empty states
+
+**Forms:**
+- Clear labels above inputs
+- Validation with error messages
+- Required field indicators
+- Date pickers for dates
+- Dropdown selects for options
+- Large submit buttons
+- Cancel/back options
+- Loading states during submission
+
+**Verification Result Cards:**
+- Large, centered layout
+- Prominent status icon (✅ or ❌)
+- Color-coded background (green/red/yellow)
+- Clear status message
+- Detailed information sections
+- Action buttons at bottom
+- Print-friendly design
+
+**QR Code Scanner:**
+- Full camera view
+- Overlay guide for QR alignment
+- Flashlight toggle
+- Manual entry fallback
+- Loading indicator
+- Error handling for camera access
+
+**Transfer History Timeline:**
+- Vertical timeline visualization
+- Icons for each stage
+- Timestamps for each transfer
+- Party names and roles
+- Current location indicator
+- Blockchain transaction links
+
+**Modals:**
+- Centered overlay with backdrop
+- Close button (X) in corner
+- Header with title
+- Content area
+- Action buttons at bottom
+- Keyboard accessibility (ESC to close)
+
+### Responsive Design
+- Mobile-first approach
+- Breakpoints: mobile (< 768px), tablet (768-1024px), desktop (> 1024px)
+- Hamburger menu on mobile
+- Stack cards vertically on mobile
+- Full-width forms on mobile
+- Touch-friendly button sizes (minimum 44x44px)
+
+---
+
+## SECURITY REQUIREMENTS
+
+### Authentication Security
+- Hash all passwords with bcrypt (10 rounds minimum)
+- Use strong JWT secret keys
+- Short-lived JWT tokens (7 days maximum)
+- HttpOnly cookies for token storage (or localStorage with XSS protection)
+- Token refresh mechanism
+- Automatic logout on token expiration
+- Password strength requirements (8+ characters, mixed case, numbers)
+
+### Authorization
+- Role-based access control on all endpoints
+- Verify user ownership before allowing actions
+- Prevent cross-role access
+- Check permissions on both frontend and backend
+- Validate user identity on every protected request
+
+### Input Validation
+- Server-side validation for all inputs
+- Sanitize all user inputs
+- Use parameterized database queries (prevent SQL injection)
+- Validate data types, lengths, formats
+- Reject invalid requests with clear error messages
+- Validate dates (production must be before expiry)
+- Regex validation for serial IDs and batch numbers
+
+### API Security
+- Rate limiting (100 requests per 15 minutes per IP)
+- CORS configuration (allow only frontend origin)
+- Security headers (helmet.js)
+- Request size limits
+- Content-Type validation
+- HTTPS enforcement (in production)
+
+### Data Security
+- Encrypt sensitive data at rest
+- Use HTTPS for all communications
+- Don't expose internal IDs in URLs
+- Sanitize error messages (no stack traces to users)
+- Log security events
+- Regular backup of database
+
+---
+
+## FILE GENERATION REQUIREMENTS
+
+### QR Code Generation
+- Generate QR codes for each registered batch
+- Include serial ID and verification URL in QR data
+- Save as PNG images (400x400px minimum)
+- Store in uploads/qrcodes directory
+- Return URL path to frontend
+- Support downloading QR codes
+- Option to regenerate if needed
+
+### Metadata Files
+- Create JSON metadata files for each batch
+- Include all drug information
+- Calculate SHA-256 hash of metadata
+- Save to uploads/metadata directory
+- Use hash as blockchain reference
+- Retrieve metadata when needed
+- Handle missing metadata gracefully
+
+### File Storage Structure
+```
+uploads/
+  ├── qrcodes/
+  │   ├── DRUG-2024-ABC123.png
+  │   ├── DRUG-2024-DEF456.png
+  │   └── ...
+  └── metadata/
+      ├── DRUG-2024-ABC123.json
+      ├── DRUG-2024-DEF456.json
+      └── ...
+```
+
+---
+
+## WORKFLOW IMPLEMENTATIONS
+
+### Complete Drug Registration Workflow
+1. Manufacturer logs into dashboard
+2. Clicks "Register New Batch" button
+3. Fills out registration form with all drug details
+4. Form validates inputs client-side
+5. On submit, frontend sends POST request to backend
+6. Backend validates data again server-side
+7. Generate unique serial ID
+8. Create metadata JSON and save to file
+9. Calculate metadata hash
+10. Call blockchain service to register on SerializationRegistry contract
+11. Wait for blockchain confirmation
+12. Generate QR code with serial ID
+13. Save batch to database with blockchain transaction hash
+14. Return success response with serial ID and QR URL
+15. Frontend displays success message and QR code
+16. Redirect to batch details page
+
+### Complete Verification Workflow
+1. Consumer/Pharmacy opens verification page
+2. Scans QR code or enters serial ID manually
+3. Frontend extracts serial ID from QR data
+4. Send GET request to /api/verify/:serialId
+5. Backend queries blockchain SerializationRegistry contract
+6. Check if batch exists on blockchain
+7. If not found, return counterfeit result
+8. If found, retrieve batch details from database
+9. Get metadata from JSON file
+10. Check RecallManager contract for recall status
+11. Verify expiry date hasn't passed
+12. Get transfer history from TransferManager contract
+13. Determine verification status (authentic/counterfeit/warning)
+14. Log verification attempt in database
+15. Return complete verification result
+16. Frontend displays result with appropriate color coding
+17. Show drug details, transfer history, and action buttons
+
+### Complete Transfer Workflow
+1. Current owner (manufacturer/distributor) views their batches
+2. Clicks "Transfer" button on a specific batch
+3. Modal opens with transfer form
+4. Enters recipient email address
+5. System validates recipient exists and has correct role
+6. Adds quantity, location, and notes
+7. Submits transfer request
+8. Backend verifies ownership of batch
+9. Backend retrieves recipient wallet address
+10. Calls TransferManager contract to record transfer on blockchain
+11. Waits for blockchain confirmation
+12. Creates transfer record in database with status "pending"
+13. Updates current_owner_id in batch record (optional, or wait for acceptance)
+14. Sends notification to recipient
+15. Frontend shows success message with transaction hash
+16. Recipient sees transfer in "Incoming Shipments"
+17. Recipient accepts or rejects transfer
+18. On acceptance, ownership fully transferred
+19. Transfer status updated to "accepted"
+
+---
+
+## BLOCKCHAIN SETUP REQUIREMENTS
+
+### Local Development Environment
+- Install and configure Hardhat in blockchain directory
+- Set up hardhat.config.js with localhost network
+- Create deployment script for all three contracts
+- Deploy contracts to local Hardhat network on startup
+- Save deployed contract addresses to JSON file
+- Make addresses accessible to backend
+- Provide contract ABIs to backend service
+
+### Contract Deployment Process
+1. Start local Hardhat node
+2. Compile all Solidity contracts
+3. Run deployment script
+4. Deploy SerializationRegistry first
+5. Deploy TransferManager with registry address
+6. Deploy RecallManager with registry address
+7. Save all contract addresses to config file
+8. Grant necessary roles (regulator role for admin)
+9. Verify deployments successful
+10. Log contract addresses to console
+
+### Blockchain Integration
+- Create blockchain service in backend
+- Initialize ethers.js provider for Hardhat network
+- Load contract ABIs from compiled artifacts
+- Create contract instances with addresses
+- Implement wrapper functions for all contract calls
+- Handle transaction signing with default wallet
+- Parse and format blockchain responses
+- Implement error handling for failed transactions
+- Emit events and listen for confirmations
+
+---
+
+## ERROR HANDLING REQUIREMENTS
+
+### Frontend Error Handling
+- Display user-friendly error messages
+- Use toast notifications for errors
+- Highlight form fields with errors
+- Provide retry options for failed actions
+- Graceful degradation when features unavailable
+- Loading states during async operations
+- Network error detection and messaging
+
+### Backend Error Handling
+- Global error handler middleware
+- Validation error responses (400 status)
+- Authentication errors (401 status)
+- Authorization errors (403 status)
+- Not found errors (404 status)
+- Server errors (500 status)
+- Structured error response format
+- Error logging to console
+- Don't expose sensitive information in errors
+
+### Blockchain Error Handling
+- Handle transaction revert errors
+- Catch connection errors to blockchain
+- Handle insufficient gas errors
+- Timeout handling for slow transactions
+- Retry mechanism for failed transactions
+- Clear error messages for users
+- Fallback to database when blockchain unavailable
+
+---
+
+## TESTING REQUIREMENTS
+
+### Data Seeding
+Create seed data including:
+- 3-5 test users (one of each role)
+- 10-20 sample drug batches
+- Several transfers between parties
+- Sample verification logs
+- All with realistic data
+
+### Manual Testing Checklist
+- User registration and login
+- Each dashboard loads correctly
+- Batch registration complete flow
+- QR code generation works
+- Transfer initiation and acceptance
+- Verification shows correct results
+- Public verification accessible
+- All forms validate properly
+- Mobile responsiveness
+- Error states display correctly
+
+---
+
+## DEPLOYMENT PREPARATION
+
+### Environment Variables
+Create .env file with:
+- PORT for backend server
+- DATABASE_PATH for SQLite file
+- JWT_SECRET for authentication
+- JWT_EXPIRE duration
+- CORS_ORIGIN for frontend URL
+- UPLOAD_PATH for file storage
+- QR_CODE_PATH for QR images
+- METADATA_PATH for metadata files
+- BLOCKCHAIN_NETWORK and PORT
+
+### Startup Requirements
+- Initialize SQLite database with schema
+- Start Hardhat local blockchain
+- Deploy smart contracts
+- Initialize blockchain service
+- Start Express backend server
+- Start Vite dev server for frontend
+- Verify all connections working
+
+### Documentation Needed
+- README with setup instructions
+- API endpoint documentation
+- Environment variable explanations
+- Database schema diagram
+- User role descriptions
+- Sample API requests
+- Troubleshooting guide
+
+---
+
+## ADDITIONAL FEATURES (NICE TO HAVE)
+
+### Dashboard Analytics
+- Charts showing batch registrations over time
+- Verification trends graph
+- Transfer volume by region/time
+- Heatmap of verification locations
+- Counterfeit detection rate
+- Most verified products
+
+### Notifications System
+- Email notifications for transfers
+- In-app notifications for important events
+- Recall alerts
+- Expiry warnings
+- Transfer confirmations
+
+### Advanced Search
+- Filter by multiple criteria
+- Date range selection
+- Status filters
+- Export search results
+- Saved searches
+
+### Reporting
+- Generate PDF reports
+- Export data to CSV
+- Compliance reports
+- Audit trail reports
+- Custom report builder
+
+### Admin Features
+- System-wide statistics
+- User management
+- Recall initiation interface
+- System health monitoring
+- Activity logs
+
+---
+
+## EXPECTED DELIVERABLES
+
+1. **Fully Functional Web Application** with all core features working
+2. **Complete Database** with proper schema and relationships
+3. **Deployed Smart Contracts** on local Hardhat network
+4. **RESTful API** with all endpoints functional
+5. **Responsive Frontend** with all user interfaces
+6. **Authentication System** with role-based access
+7. **QR Code Generation** and scanning capability
+8. **Blockchain Integration** for verification and tracking
+9. **Test Data** populated in system
+10. **Documentation** for setup and usage
+
+---
+
+## SUCCESS CRITERIA
+
+The application is successful when:
+- A manufacturer can register a drug batch and see it on blockchain
+- QR codes are generated and downloadable
+- A distributor can receive and transfer batches
+- A pharmacy can verify drug authenticity by scanning QR
+- A consumer can verify without logging in
+- All transfers are recorded on blockchain
+- Verification shows accurate results
+- Dashboard statistics are correct
+- Mobile users can access all features
+- No security vulnerabilities in authentication
+- All database queries work correctly
+- Blockchain transactions confirm properly
+
+---
+
+## REPLIT-SPECIFIC INSTRUCTIONS
+
+**Please build this application in Replit with the following structure:**
+
+1. Create a monorepo with three main directories: client (React), server (Node.js), and blockchain (Hardhat)
+2. Set up the database automatically on first run
+3. Deploy blockchain contracts on server startup
+4. Use concurrent processes to run blockchain, backend, and frontend simultaneously
+5. Configure proper port forwarding for frontend (5173) and backend (3001)
+6. Use environment variables for configuration
+7. Create a clear README with setup instructions
+8. Ensure all dependencies are properly installed
+9. Handle file uploads for QR codes and metadata
+10. Make the application immediately runnable after setup
+
+**The final application should be a complete, working pharmaceutical supply chain tracking system with blockchain verification, ready for demonstration and testing.**
